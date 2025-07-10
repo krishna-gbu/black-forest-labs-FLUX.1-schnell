@@ -1,20 +1,24 @@
+import os
 import torch
 from fastapi import FastAPI
 from pydantic import BaseModel
 from diffusers import FluxPipeline
-from fastapi.responses import FileResponse
-from huggingface_hub import login
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 import io
 from zipfile import ZipFile
 from transformers import CLIPTokenizer
+from huggingface_hub import login
 
 tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-base-patch32")
 
 # Hugging Face token
-HF_TOKEN = ""
+# Retrieve the token from environment variables
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-# Login to Hugging Face CLI programmatically (optional)
+if HF_TOKEN is None:
+    raise ValueError("HF_TOKEN environment variable not set. Please set it before running the app.")
+
+# Login to Hugging Face CLI programmatically
 login(token=HF_TOKEN)
 
 # Clear CUDA cache before loading model
@@ -43,22 +47,6 @@ class GenerateRequest(BaseModel):
     seed: int = 0
 
 @app.post("/generate-image")
-# async def generate_image(req: GenerateRequest):
-#     generator = torch.Generator(device).manual_seed(req.seed)
-#     image = pipe(
-#         req.prompt,
-#         guidance_scale=req.guidance_scale,
-#         num_inference_steps=req.num_inference_steps,
-#         max_sequence_length=req.max_sequence_length,
-#         generator=generator,
-#     ).images[0]
-
-#     output_path = "output.png"
-#     image.save(output_path)
-#     return FileResponse(output_path, media_type="image/png")
-
-
-@app.post("/generate-image")
 async def generate_image(req: GenerateRequest):
     tokens = tokenizer.tokenize(req.prompt)
     if len(tokens) > 77:
@@ -79,7 +67,6 @@ async def generate_image(req: GenerateRequest):
         ).images[0]
         images.append(img)
 
-
     # Create a zip file in memory containing all 4 images
     zip_buffer = io.BytesIO()
     with ZipFile(zip_buffer, "w") as zip_file:
@@ -95,7 +82,6 @@ async def generate_image(req: GenerateRequest):
         media_type="application/x-zip-compressed",
         headers={"Content-Disposition": "attachment; filename=images.zip"},
     )
-
 
 if __name__ == "__main__":
     import uvicorn
