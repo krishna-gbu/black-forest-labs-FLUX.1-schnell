@@ -105,6 +105,7 @@ Send POST requests to `/generate-image` with JSON payload:
   "guidance_scale": 7.5,
   "num_inference_steps": 20,
   "max_sequence_length": 77,
+  "num_images": 10,
   "seed": 42
 }
 ```
