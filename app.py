@@ -44,7 +44,7 @@ class GenerateRequest(BaseModel):
     prompt: str
     guidance_scale: float = 0.0
     num_inference_steps: int = 4
-    max_sequence_length: int = Field(default=77, ge=1, le=77) # Adjusted default and max to 77
+    max_sequence_length: int = Field(default=77, ge=1, le=256) # Adjusted default and max to 77
     seed: int = 0
     num_images: int = Field(default=1, ge=1, le=10)
 
